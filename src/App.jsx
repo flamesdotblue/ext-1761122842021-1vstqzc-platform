@@ -1,28 +1,80 @@
-import { useState } from 'react'
+import { useRef, useState, useCallback } from "react";
+import Header from "./components/Header";
+import VideoPlayer from "./components/VideoPlayer";
+import ControlBar from "./components/ControlBar";
+import ExportPanel from "./components/ExportPanel";
 
-function App() {
-  const [count, setCount] = useState(0)
+export default function App() {
+  const videoRef = useRef(null);
+  const [videoUrl, setVideoUrl] = useState(null);
+  const [duration, setDuration] = useState(0);
+
+  const [trimStart, setTrimStart] = useState(0);
+  const [trimEnd, setTrimEnd] = useState(0);
+  const [muted, setMuted] = useState(false);
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [overlayText, setOverlayText] = useState("");
+
+  const handleLoadedMetadata = useCallback((d) => {
+    setDuration(d);
+    setTrimStart(0);
+    setTrimEnd(d);
+  }, []);
+
+  const handleSelectFile = (file) => {
+    if (!file) return;
+    if (videoUrl) URL.revokeObjectURL(videoUrl);
+    const url = URL.createObjectURL(file);
+    setVideoUrl(url);
+  };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-50 to-blue-50 flex items-center justify-center">
-      <div className="bg-white p-8 rounded-lg shadow-lg">
-        <h1 className="text-3xl font-bold text-gray-800 mb-4">
-          Vibe Coding Platform
-        </h1>
-        <p className="text-gray-600 mb-6">
-          Your AI-powered development environment
-        </p>
-        <div className="text-center">
-          <button
-            onClick={() => setCount(count + 1)}
-            className="bg-blue-500 hover:bg-blue-600 text-white font-semibold py-2 px-4 rounded"
-          >
-            Count is {count}
-          </button>
-        </div>
-      </div>
-    </div>
-  )
-}
+    <div className="min-h-screen bg-neutral-950 text-neutral-100">
+      <Header />
 
-export default App
+      <main className="mx-auto max-w-6xl px-4 pb-24">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-12">
+          <section className="md:col-span-8">
+            <VideoPlayer
+              videoRef={videoRef}
+              videoUrl={videoUrl}
+              onSelectFile={handleSelectFile}
+              onLoadedMetadata={handleLoadedMetadata}
+              overlayText={overlayText}
+              playbackRate={playbackRate}
+              muted={muted}
+              trimStart={trimStart}
+              trimEnd={trimEnd}
+            />
+          </section>
+
+          <aside className="md:col-span-4 space-y-6">
+            <ControlBar
+              duration={duration}
+              trimStart={trimStart}
+              trimEnd={trimEnd}
+              setTrimStart={setTrimStart}
+              setTrimEnd={setTrimEnd}
+              playbackRate={playbackRate}
+              setPlaybackRate={setPlaybackRate}
+              muted={muted}
+              setMuted={setMuted}
+              overlayText={overlayText}
+              setOverlayText={setOverlayText}
+              hasVideo={!!videoUrl}
+            />
+
+            <ExportPanel
+              videoRef={videoRef}
+              hasVideo={!!videoUrl}
+              trimStart={trimStart}
+              trimEnd={trimEnd}
+              muted={muted}
+              overlayText={overlayText}
+            />
+          </aside>
+        </div>
+      </main>
+    </div>
+  );
+}
